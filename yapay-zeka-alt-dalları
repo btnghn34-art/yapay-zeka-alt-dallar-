@@ -1,0 +1,252 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  CheckCircle2, 
+  XCircle, 
+  RefreshCcw, 
+  Gamepad2, 
+  Lightbulb,
+  Cpu,
+  Brain,
+  MessageSquare,
+  Dna,
+  UserCheck,
+  Zap,
+  Eye,
+  Star,
+  Move,
+  AlertTriangle
+} from 'lucide-react';
+
+const INITIAL_PAIRS = [
+  { id: 1, term: "Yapay Sinir Ağları", icon: <Brain size={16} />, def: "İnsan beyninin çalışma şeklini taklit eden, karmaşık sorunları çözebilen sistemlerdir.", correctId: 1, color: "blue" },
+  { id: 2, term: "Doğal Dil İşleme", icon: <MessageSquare size={16} />, def: "İnsan dillerini anlayıp cevap verebilen teknolojidir.", correctId: 2, color: "purple" },
+  { id: 3, term: "Genetik Algoritmalar", icon: <Dna size={16} />, def: "Doğadaki evrimi örnek alarak en iyi çözümü arayan yöntemdir.", correctId: 3, color: "emerald" },
+  { id: 4, term: "Uzman Sistemler", icon: <UserCheck size={16} />, def: "Özel alanlarda uzman bir insan gibi karar verebilen yazılımlardır.", correctId: 4, color: "orange" },
+  { id: 5, term: "Makine Öğrenmesi", icon: <Zap size={16} />, def: "Verileri inceleyerek kendi kendine öğrenen sistemlerdir.", correctId: 5, color: "pink" },
+  { id: 6, term: "Görüntü İşleme", icon: <Eye size={16} />, def: "Resimlerdeki nesneleri ve yüzleri tanıyabilen sistemlerdir.", correctId: 6, color: "cyan" },
+  { id: 7, term: "Bulanık Mantık", icon: <Lightbulb size={16} />, def: "Ara değerlerle (biraz, çok vb.) karar veren mantıktır.", correctId: 7, color: "indigo" },
+];
+
+const colorConfig = {
+  blue: { bg: 'bg-blue-500', shadow: 'shadow-[0_3px_0_#1e40af]', light: 'bg-blue-50' },
+  purple: { bg: 'bg-purple-500', shadow: 'shadow-[0_3px_0_#6b21a8]', light: 'bg-purple-50' },
+  emerald: { bg: 'bg-emerald-500', shadow: 'shadow-[0_3px_0_#065f46]', light: 'bg-emerald-50' },
+  orange: { bg: 'bg-orange-500', shadow: 'shadow-[0_3px_0_#9a3412]', light: 'bg-orange-50' },
+  pink: { bg: 'bg-pink-500', shadow: 'shadow-[0_3px_0_#9d174d]', light: 'bg-pink-50' },
+  cyan: { bg: 'bg-cyan-500', shadow: 'shadow-[0_3px_0_#155e75]', light: 'bg-cyan-50' },
+  indigo: { bg: 'bg-indigo-500', shadow: 'shadow-[0_3px_0_#3730a3]', light: 'bg-indigo-50' }
+};
+
+const App = () => {
+  const [terms, setTerms] = useState([]);
+  const [definitions, setDefinitions] = useState([]);
+  const [selectedTerm, setSelectedTerm] = useState(null);
+  const [matches, setMatches] = useState({});
+  const [showResults, setShowResults] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    initGame();
+  }, []);
+
+  const initGame = () => {
+    const shuffledTerms = [...INITIAL_PAIRS].sort(() => Math.random() - 0.5);
+    const shuffledDefs = [...INITIAL_PAIRS].sort(() => Math.random() - 0.5);
+    setTerms(shuffledTerms);
+    setDefinitions(shuffledDefs);
+    setMatches({});
+    setShowResults(false);
+    setSelectedTerm(null);
+    setScore(0);
+  };
+
+  const matchTermToDef = (term, defIndex) => {
+    const newMatches = { ...matches };
+    Object.keys(newMatches).forEach(key => {
+      if (newMatches[key].id === term.id) delete newMatches[key];
+    });
+    newMatches[defIndex] = term;
+    setMatches(newMatches);
+    setSelectedTerm(null);
+  };
+
+  const onDragStart = (e, term) => {
+    if (showResults) return;
+    e.dataTransfer.setData("termId", term.id);
+    setSelectedTerm(term);
+  };
+
+  const onDrop = (e, defIndex) => {
+    e.preventDefault();
+    const termId = parseInt(e.dataTransfer.getData("termId"));
+    const term = INITIAL_PAIRS.find(t => t.id === termId);
+    if (term) matchTermToDef(term, defIndex);
+  };
+
+  const checkAnswers = () => {
+    let currentScore = 0;
+    definitions.forEach((def, index) => {
+      if (matches[index] && matches[index].id === def.correctId) currentScore++;
+    });
+    setScore(currentScore);
+    setShowResults(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-2 md:p-4 font-sans selection:bg-indigo-100 flex flex-col items-center">
+      <div className="w-full max-w-4xl">
+        
+        {/* Compact Header */}
+        <header className="mb-4 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm border border-indigo-50 mb-2">
+            <Gamepad2 className="text-indigo-600" size={20} />
+            <h1 className="text-lg md:text-xl font-black text-indigo-950 uppercase tracking-tight">
+              Yapay Zeka Alt Dalları
+            </h1>
+          </div>
+          <p className="text-slate-500 font-bold text-xs flex items-center justify-center gap-1">
+            <Star size={12} className="text-amber-500 fill-amber-500" />
+            Sürükle veya tıkla: Görevleri tamamla!
+          </p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          
+          {/* Term Selection Column - Standardized button sizes */}
+          <div className="lg:col-span-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-100 lg:sticky lg:top-4">
+            <h2 className="text-[10px] font-black text-slate-400 mb-3 tracking-[0.2em] flex items-center gap-2 uppercase">
+              <Move size={12} /> SEÇENEKLER
+            </h2>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+              {terms.map((term) => {
+                const isUsed = Object.values(matches).some(m => m.id === term.id);
+                const isSelected = selectedTerm?.id === term.id;
+                const config = colorConfig[term.color];
+                
+                return (
+                  <button
+                    key={term.id}
+                    draggable={!showResults && !isUsed}
+                    onDragStart={(e) => onDragStart(e, term)}
+                    onClick={() => !showResults && !isUsed && setSelectedTerm(term)}
+                    className={`
+                      relative w-full px-3 py-2.5 rounded-xl flex items-center gap-2 transition-all duration-150 transform active:translate-y-1 active:shadow-none text-white
+                      ${config.bg} ${config.shadow}
+                      ${isSelected ? 'ring-2 ring-offset-1 ring-indigo-400 scale-105 z-10' : ''}
+                      ${isUsed && !isSelected ? 'opacity-10 grayscale pointer-events-none' : 'cursor-grab'}
+                    `}
+                  >
+                    <span className="bg-white/20 p-1 rounded-lg flex-shrink-0">{term.icon}</span>
+                    <span className="text-[11px] md:text-xs font-black tracking-tight text-left break-words">
+                      {term.term}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Definitions Area - Reduced spacing */}
+          <div className="lg:col-span-8 space-y-2">
+            {definitions.map((def, index) => {
+              const matchedTerm = matches[index];
+              const isCorrect = showResults && matchedTerm?.id === def.correctId;
+              const isWrong = showResults && matchedTerm && matchedTerm?.id !== def.correctId;
+              const matchedConfig = matchedTerm ? colorConfig[matchedTerm.color] : null;
+
+              return (
+                <div 
+                  key={index}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => onDrop(e, index)}
+                  onClick={() => !showResults && handleDefClick(index)}
+                  className={`
+                    flex flex-col sm:flex-row items-center gap-3 p-3 rounded-2xl border-2 transition-all duration-200 cursor-pointer relative
+                    ${matchedTerm ? 'bg-white shadow-sm' : 'bg-slate-50 border-dashed border-slate-200 hover:border-indigo-200'}
+                    ${isCorrect ? 'border-emerald-500 bg-emerald-50' : 
+                      isWrong ? 'border-rose-500 bg-rose-50 animate-pulse' : 'border-transparent'}
+                  `}
+                >
+                  {/* Slot */}
+                  <div className={`
+                    flex-shrink-0 w-full sm:w-40 h-10 flex items-center justify-center rounded-xl transition-all duration-300 font-black text-[10px]
+                    ${matchedTerm ? (matchedConfig.bg + ' text-white ' + matchedConfig.shadow) : 
+                      'bg-white border-2 border-dashed border-slate-200 text-slate-300'}
+                  `}>
+                    {matchedTerm ? (
+                      <div className="flex items-center gap-1.5 animate-in zoom-in-95">
+                        {matchedTerm.icon}
+                        <span className="truncate max-w-[100px]">{matchedTerm.term}</span>
+                      </div>
+                    ) : (
+                      <span>BOŞLUK</span>
+                    )}
+                  </div>
+
+                  <p className={`flex-1 text-xs md:text-sm font-bold leading-tight ${matchedTerm ? 'text-slate-900' : 'text-slate-500'}`}>
+                    {def.def}
+                  </p>
+
+                  {/* Warning/Success Label */}
+                  {showResults && matchedTerm && (
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter ${isCorrect ? 'text-emerald-600 bg-emerald-100' : 'text-rose-600 bg-rose-100'}`}>
+                      {isCorrect ? (
+                        <><CheckCircle2 size={12} /> DOĞRU</>
+                      ) : (
+                        <><AlertTriangle size={12} /> HATALI!</>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Action Panel - Compact */}
+        <div className="mt-6 flex flex-col items-center gap-3 pb-8">
+          {showResults && (
+            <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 animate-in slide-in-from-bottom-2">
+              <div className="text-center">
+                <span className="text-[8px] font-black text-slate-400 block tracking-[0.2em]">SKOR</span>
+                <span className="text-2xl font-black text-indigo-600 leading-none">{score} / {INITIAL_PAIRS.length}</span>
+              </div>
+              <p className="text-xs font-bold text-slate-600 border-l pl-4 border-slate-100">
+                {score === INITIAL_PAIRS.length ? "Muhteşem! 🏆" : "Hataları düzeltip tekrar dene! 💪"}
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            {!showResults ? (
+              <button
+                onClick={checkAnswers}
+                disabled={Object.keys(matches).length === 0}
+                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white font-black rounded-xl shadow-[0_4px_0_#312e81] active:shadow-none active:translate-y-1 transition-all text-sm flex items-center gap-2"
+              >
+                <Zap size={16} fill="currentColor" /> KONTROL ET
+              </button>
+            ) : (
+              <button
+                onClick={initGame}
+                className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-xl shadow-[0_4px_0_#0f172a] active:shadow-none active:translate-y-1 transition-all text-sm flex items-center gap-2"
+              >
+                <RefreshCcw size={16} /> YENİDEN BAŞLAT
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-in { animation: zoomIn 0.2s ease-out forwards; }
+      `}</style>
+    </div>
+  );
+};
+
+export default App;
